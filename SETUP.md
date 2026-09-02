@@ -332,9 +332,15 @@ elsewhere; correctness does not depend on it (see "double voting" below).
 3. Watch **votes cast / remaining** during the day. The tally is *not* visible
    here and the tally endpoint returns **403** for everyone, including you,
    while voting is open. That is the point of the toggle.
-4. When you are done, press **Close voting**, then **Refresh tally**. The bar
-   charts appear and the counts are written into the `Results` tab.
-5. **Export CSV** downloads the per-seat tally. It contains no emails.
+4. The **Results** tab shows live standings and refreshes every 8 seconds while
+   the page is visible. **By seat** breaks the same ballots down per seat, and
+   **Not voted** lists everyone still outstanding, searchable by name or roll
+   number.
+5. When you are done, press **Close voting**, then **Save tally to sheet** to
+   write the final numbers into the `Results` tab.
+6. **Results CSV** downloads one row per candidate with compiled totals.
+   **Pending CSV** downloads roll number, name and email of everyone who has not
+   voted. Neither contains a ballot.
 
 ### Checking on the election from the terminal
 
@@ -388,9 +394,16 @@ only *what* was voted for, with a random UUID, at a random row position, dated
 to the day. Nothing joins the two. The API never returns a ballot id to the
 voter, because a receipt is a link.
 
-**Results stay sealed.** Every path to a tally goes through one gate that checks
-the toggle first. There is no public results route at all, and the admin routes
-403 while voting is open.
+**Results are admin-only.** There is no public results route of any kind. Every
+tally endpoint requires the admin cookie and returns 401 without it, whether
+voting is open or closed. The admin panel shows live standings while voting runs
+— useful for spotting a stuck election — and no voter can reach those numbers.
+
+**How a candidate's total is worked out.** A vote in a candidate's own gendered
+seat and a vote for them in the open seat are both votes for the same person, so
+they add up. Sahil Gupta with 30 male-seat votes and 12 open-seat votes has 42.
+The per-seat splits are kept alongside, because winning the reserved female seat
+is a different question from having the most votes overall.
 
 **The open-seat rule** is enforced on the server in `src/lib/ballot.ts` before
 anything is written. Greying out the two picked candidates in the UI is a
@@ -398,11 +411,24 @@ convenience; it is not what enforces the rule.
 
 ---
 
-## 10. Changing the candidates
+## 10. Changing the candidates and the roll
 
 Edit `src/config/candidates.ts` and put the photos in `public/candidates/`.
-`TOTAL_ELECTORATE` in the same file drives the "remaining" figure in the admin
-panel.
+
+The electoral roll — roll number, name and email for all 152 students — lives in
+`src/config/roster.ts`. It drives the voter's own roll number on the ballot, the
+turnout figures, and the "not voted" list.
+
+That file is **server-only**: it holds real students' names and addresses, and
+the `import "server-only"` at the top makes it a build error if anything ever
+pulls it into the browser bundle. Keep it that way, and keep the repository
+private.
+
+Emails in the source PDF were truncated at the column edge, so each address was
+rebuilt as `<local part>@itbhu.ac.in`, and names the PDF also truncated were
+reconstructed from the email. `npm test` checks the roll for duplicates, gaps in
+the roll numbers, malformed addresses, and that every candidate appears on it —
+but it cannot catch a plausible-looking wrong spelling, so skim the file once.
 
 Do not reuse an id for a different person once voting has started — ballots
 store ids, so recycling one silently reassigns votes already cast.

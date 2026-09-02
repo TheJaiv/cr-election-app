@@ -7,15 +7,15 @@
  */
 import type {
   BallotRecord,
+  CandidateResult,
   ElectionStore,
-  ResultRow,
   VoterRow,
 } from "@/server/store";
 
 export class FakeStore implements ElectionStore {
   voters: VoterRow[] = [];
   ballots: BallotRecord[] = [];
-  results: ResultRow[] = [];
+  results: CandidateResult[] = [];
   votingOpen = true;
   failBallotWrite = false;
 
@@ -56,9 +56,9 @@ export class FakeStore implements ElectionStore {
     return [...this.ballots];
   }
 
-  async countVoters(): Promise<number> {
+  async listVoterEmails(): Promise<string[]> {
     await this.tick();
-    return this.voters.length;
+    return this.voters.map((v) => v.email);
   }
 
   async isVotingOpen(): Promise<boolean> {
@@ -71,7 +71,7 @@ export class FakeStore implements ElectionStore {
     this.votingOpen = open;
   }
 
-  async writeResults(rows: ResultRow[]): Promise<void> {
+  async writeResults(rows: CandidateResult[]): Promise<void> {
     await this.tick();
     this.results = [...rows];
   }

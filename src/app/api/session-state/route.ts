@@ -1,12 +1,13 @@
 /**
- * What the vote page needs on load: whether you are signed in, whether voting
- * is open, and whether you have already voted.
+ * What the vote page needs on load: whether you are signed in, who you are on
+ * the roll, whether voting is open, and whether you have already voted.
  *
- * Deliberately returns only the caller's own email — never a list, never
- * anything from the Voters tab about anyone else.
+ * Returns only the caller's OWN roll entry. Never a list, never anything about
+ * another student.
  */
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
+import { studentByEmail } from "@/config/roster";
 import { requireVoterEmail } from "@/lib/auth";
 import { CSRF_COOKIE } from "@/lib/csrf";
 import { getStore } from "@/server/sheets";
@@ -26,14 +27,19 @@ export async function GET() {
     store.findVoterRows(email),
   ]);
 
+  const student = studentByEmail(email);
+
   const response = NextResponse.json({
     signedIn: true,
     email,
+    // Undefined when an allowlisted account is not on the roll (e.g. a test
+    // address added to ALLOWED_EMAILS). The ballot still works.
+    roll: student?.roll,
+    name: student?.name,
     votingOpen,
     hasVoted: rows.length > 0,
   });
 
-  // Issue (or refresh) the double-submit CSRF token the vote POST must echo.
   response.cookies.set(CSRF_COOKIE, randomBytes(32).toString("base64url"), {
     httpOnly: false, // must be readable by the client to echo in the header
     sameSite: "strict",

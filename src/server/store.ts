@@ -35,6 +35,19 @@ export interface VoterRow {
   guard: string;
 }
 
+/** One candidate's standing, with seat and open votes added together. */
+export interface CandidateResult {
+  candidateId: string;
+  name: string;
+  gender: "male" | "female";
+  /** Votes in the candidate's own gendered seat. */
+  seatVotes: number;
+  /** Votes in the open seat. */
+  openVotes: number;
+  /** seatVotes + openVotes — the number that decides the election. */
+  totalVotes: number;
+}
+
 export interface ElectionStore {
   /** Every Voters row matching `email`, in sheet order. */
   findVoterRows(email: string): Promise<VoterRow[]>;
@@ -46,17 +59,10 @@ export interface ElectionStore {
   insertBallotAtRandomPosition(ballot: BallotRecord): Promise<void>;
   /** Every ballot, for tallying. */
   readBallots(): Promise<BallotRecord[]>;
-  /** Total rows in the Voters tab (excluding the header). */
-  countVoters(): Promise<number>;
+  /** Every email in the Voters tab. Admin-only — never expose this to a voter. */
+  listVoterEmails(): Promise<string[]>;
   isVotingOpen(): Promise<boolean>;
   setVotingOpen(open: boolean): Promise<void>;
   /** Overwrite the Results tab tally block. */
-  writeResults(rows: ResultRow[], computedAtIso: string): Promise<void>;
-}
-
-export interface ResultRow {
-  seat: "MALE" | "FEMALE" | "OPEN";
-  candidateId: string;
-  name: string;
-  votes: number;
+  writeResults(rows: CandidateResult[], computedAtIso: string): Promise<void>;
 }

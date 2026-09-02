@@ -15,14 +15,14 @@ type Stage = "loading" | "picking" | "review" | "done";
 interface SessionState {
   signedIn: boolean;
   email?: string;
+  roll?: string;
+  name?: string;
   votingOpen?: boolean;
   hasVoted?: boolean;
 }
 
 function readCookie(name: string): string {
-  const match = document.cookie.match(
-    new RegExp(`(?:^|; )${name}=([^;]*)`),
-  );
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : "";
 }
 
@@ -45,6 +45,39 @@ function ReviewRow({ seat, id }: { seat: string; id: string }) {
   );
 }
 
+function Identity({
+  state,
+  onSignOut,
+}: {
+  state: SessionState;
+  onSignOut: () => void;
+}) {
+  return (
+    <div className="identity">
+      <div>
+        {state.name ? (
+          <>
+            <span className="roll">{state.name}</span>
+            {state.roll ? (
+              <span className="sub"> · {state.roll}</span>
+            ) : null}
+          </>
+        ) : (
+          <span className="roll">{state.email}</span>
+        )}
+        {state.name ? <div className="sub">{state.email}</div> : null}
+      </div>
+      <button
+        className="ghost"
+        style={{ width: "auto", flex: "none" }}
+        onClick={onSignOut}
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
+
 export function Ballot({ signOutAction }: { signOutAction: () => void }) {
   const [stage, setStage] = useState<Stage>("loading");
   const [state, setState] = useState<SessionState | null>(null);
@@ -54,7 +87,7 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // One nonce per page load. Reused across retries so a duplicate submission of
+  // One nonce per page load, reused across retries so a duplicate submission of
   // the same ballot is rejected server-side rather than double-counted.
   const [nonce] = useState(() =>
     typeof crypto !== "undefined" && crypto.randomUUID
@@ -86,16 +119,15 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
     [malePick, femalePick],
   );
 
-  const handleOpenChange = useCallback((id: string) => {
-    setOpenPick(id);
-  }, []);
+  const handleOpenChange = useCallback((id: string) => setOpenPick(id), []);
 
-  // If the open pick becomes invalid because a seat pick changed, clear it.
+  // If a seat pick changes and invalidates the open pick, clear it.
   useEffect(() => {
     if (openPick && openBlocked.has(openPick)) setOpenPick(null);
   }, [openBlocked, openPick]);
 
   const complete = Boolean(malePick && femalePick && openPick);
+  const picked = [malePick, femalePick, openPick].filter(Boolean).length;
 
   async function submit() {
     if (!complete || submitting) return;
@@ -133,38 +165,51 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
   }
 
   if (stage === "loading") {
-    return <p className="footnote">Loading your ballot…</p>;
+    return (
+      <p className="footnote">
+        <span className="spinner" /> Loading your ballot…
+      </p>
+    );
   }
 
   if (state && !state.votingOpen && !state.hasVoted) {
     return (
-      <div className="card center stack">
-        <p className="notice info" style={{ marginBottom: 0 }}>
-          Voting is closed right now. If you think this is a mistake, contact the
-          election administrator.
-        </p>
-        <button className="secondary" onClick={signOutAction}>
-          Sign out
-        </button>
-      </div>
+      <>
+        {state ? <Identity state={state} onSignOut={signOutAction} /> : null}
+        <div className="card center stack">
+          <div style={{ fontSize: 38, lineHeight: 1 }} aria-hidden="true">
+            🔒
+          </div>
+          <h2 style={{ margin: 0, fontSize: 18 }}>Voting is not open</h2>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>
+            The ballot opens when the election administrator starts voting.
+            Check back shortly.
+          </p>
+        </div>
+      </>
     );
   }
 
   if (stage === "done") {
     return (
-      <div className="card center stack">
-        <div style={{ fontSize: 44, lineHeight: 1 }} aria-hidden="true">
-          ✅
+      <>
+        {state ? <Identity state={state} onSignOut={signOutAction} /> : null}
+        <div className="card center stack">
+          <div style={{ fontSize: 42, lineHeight: 1 }} aria-hidden="true">
+            ✅
+          </div>
+          <h2 style={{ margin: 0, fontSize: 19 }}>Your vote is recorded</h2>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>
+            Thanks for voting. Ballots are anonymous and cannot be changed, so
+            there is nothing more to do. Results are published once voting
+            closes.
+          </p>
         </div>
-        <h2 style={{ margin: 0, fontSize: 19 }}>Your vote is recorded</h2>
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>
-          Thanks for voting. Ballots are anonymous and cannot be changed, so
-          there is nothing more to do. Results are published after voting closes.
+        <p className="footnote">
+          Your name is recorded only as having voted. Which candidates you chose
+          is stored separately and cannot be traced back to you.
         </p>
-        <button className="secondary" onClick={signOutAction}>
-          Sign out
-        </button>
-      </div>
+      </>
     );
   }
 
@@ -172,8 +217,10 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
     return (
       <>
         <div className="card">
-          <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Check your ballot</h2>
-          <p className="hint" style={{ marginBottom: 8 }}>
+          <div className="seat-head">
+            <h2>Check your ballot</h2>
+          </div>
+          <p className="hint" style={{ margin: "2px 0 10px" }}>
             Once you submit, it cannot be changed.
           </p>
           <ReviewRow seat="Male seat" id={malePick!} />
@@ -183,7 +230,13 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
         {error ? <p className="notice error">{error}</p> : null}
         <div className="sticky-actions stack">
           <button className="primary" onClick={submit} disabled={submitting}>
-            {submitting ? "Submitting…" : "Submit my vote"}
+            {submitting ? (
+              <>
+                <span className="spinner" /> Submitting…
+              </>
+            ) : (
+              "Submit my vote"
+            )}
           </button>
           <button
             className="secondary"
@@ -199,10 +252,12 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
 
   return (
     <>
+      {state ? <Identity state={state} onSignOut={signOutAction} /> : null}
       {error ? <p className="notice error">{error}</p> : null}
 
       <SeatSection
-        title="1. Male seat"
+        step={1}
+        title="Male seat"
         hint="Pick one of the seven male candidates."
         candidates={MALE_CANDIDATES}
         value={malePick}
@@ -210,7 +265,8 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
       />
 
       <SeatSection
-        title="2. Female seat"
+        step={2}
+        title="Female seat"
         hint="Pick one of the two female candidates."
         candidates={FEMALE_CANDIDATES}
         value={femalePick}
@@ -218,7 +274,8 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
       />
 
       <SeatSection
-        title="3. Open seat"
+        step={3}
+        title="Open seat"
         hint="Pick anyone — except the two people you already picked above."
         candidates={CANDIDATES}
         value={openPick}
@@ -233,14 +290,9 @@ export function Ballot({ signOutAction }: { signOutAction: () => void }) {
           disabled={!complete}
           onClick={() => setStage("review")}
         >
-          {complete ? "Review my ballot" : "Pick all three seats"}
+          {complete ? "Review my ballot" : `${picked} of 3 seats picked`}
         </button>
       </div>
-
-      <p className="footnote">
-        Signed in as {state?.email}. Your ballot is stored separately from your
-        email — nobody can see how you voted.
-      </p>
     </>
   );
 }

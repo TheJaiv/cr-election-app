@@ -4,7 +4,8 @@
  * One spreadsheet, three tabs:
  *   Voters  — email | timestamp | guard         (records only THAT you voted)
  *   Ballots — ballotId | malePick | femalePick | openPick | votedOn (anonymous)
- *   Results — the toggle + the computed tally
+ *   Results — the toggle + the computed tally (one row per candidate, with
+ *             seat and open votes added into a single total)
  *
  * The Results tab doubles as the settings store so the whole election lives in
  * three tabs:
@@ -15,7 +16,7 @@
 import "server-only";
 import { google, type sheets_v4 } from "googleapis";
 import { env } from "@/lib/env";
-import type { ElectionStore, ResultRow, VoterRow } from "./store";
+import type { ElectionStore, VoterRow } from "./store";
 
 const VOTERS = "Voters";
 const BALLOTS = "Ballots";
@@ -107,9 +108,9 @@ export function createSheetsStore(): ElectionStore {
         .filter((r) => r.email.toLowerCase() === target);
     },
 
-    async countVoters() {
+    async listVoterEmails() {
       const column = await readColumn(`${VOTERS}!A${FIRST_DATA_ROW}:A`);
-      return column.filter((v) => v.trim() !== "").length;
+      return column.map((v) => v.trim()).filter((v) => v !== "");
     },
 
     async appendVoter(row) {
@@ -248,18 +249,34 @@ export function createSheetsStore(): ElectionStore {
       // Clear the old tally block but leave the toggle in row 1 untouched.
       await sheets.spreadsheets.values.clear({
         spreadsheetId: env.googleSheetId,
-        range: `${RESULTS}!A2:D`,
+        range: `${RESULTS}!A2:G`,
       });
       await sheets.spreadsheets.values.update({
         spreadsheetId: env.googleSheetId,
-        range: `${RESULTS}!A2:D${4 + rows.length}`,
+        range: `${RESULTS}!A2:G${4 + rows.length}`,
         valueInputOption: "RAW",
         requestBody: {
           values: [
-            ["lastComputed", computedAtIso, "", ""],
-            ["", "", "", ""],
-            ["seat", "candidateId", "name", "votes"],
-            ...rows.map((r) => [r.seat, r.candidateId, r.name, r.votes]),
+            ["lastComputed", computedAtIso, "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            [
+              "rank",
+              "candidateId",
+              "name",
+              "gender",
+              "seatVotes",
+              "openVotes",
+              "totalVotes",
+            ],
+            ...rows.map((r, i) => [
+              i + 1,
+              r.candidateId,
+              r.name,
+              r.gender,
+              r.seatVotes,
+              r.openVotes,
+              r.totalVotes,
+            ]),
           ],
         },
       });

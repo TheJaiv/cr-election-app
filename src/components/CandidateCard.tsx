@@ -31,9 +31,14 @@ export function CandidateCard({
       disabled={disabled}
       onClick={() => onSelect(candidate.id)}
     >
+      {selected ? (
+        <span className="tick" aria-hidden="true">
+          ✓
+        </span>
+      ) : null}
       {candidate.photo ? (
-        // Plain <img>: photos are local, already sized, and this keeps the page
-        // free of the image optimiser on Vercel's free tier.
+        // Plain <img>: photos are local and already sized, so the image
+        // optimiser would add a round trip for nothing.
         // eslint-disable-next-line @next/next/no-img-element
         <img src={candidate.photo} alt="" loading="lazy" />
       ) : (

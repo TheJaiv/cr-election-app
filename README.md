@@ -17,11 +17,16 @@ Each voter casts exactly three votes:
 The open-seat rule is enforced on the server before anything is written. The UI
 greys out the two already-picked candidates as a convenience only.
 
+**Scoring.** A candidate's total is their own-seat votes plus their open-seat
+votes — both are votes for the same person. The per-seat splits are kept too,
+since the reserved seats are decided separately.
+
 ## Layout
 
 ```
 src/
-  config/candidates.ts     the roster — edit this to change the ballot
+  config/candidates.ts     the nine candidates — edit this to change the ballot
+  config/roster.ts         the 152-student electoral roll (SERVER ONLY, real PII)
   lib/
     ballot.ts              the election rules (pure, heavily tested)
     allowlist.ts           who may sign in
@@ -44,7 +49,7 @@ tests/                     rule, concurrency, allowlist, admin, CSRF tests
 npm install
 npm run verify-sheet     # preflight the Google Sheets wiring
 npm run dev              # http://localhost:3000
-npm test                 # 82 tests
+npm test                 # 99 tests
 npm run typecheck
 npm run build
 npm run hash-password -- "your admin password"

@@ -4,6 +4,7 @@ import type { Candidate } from "@/config/candidates";
 import { CandidateCard } from "./CandidateCard";
 
 export function SeatSection({
+  step,
   title,
   hint,
   candidates,
@@ -12,6 +13,7 @@ export function SeatSection({
   isDisabled,
   disabledNote,
 }: {
+  step: number;
   title: string;
   hint: string;
   candidates: readonly Candidate[];
@@ -22,7 +24,12 @@ export function SeatSection({
 }) {
   return (
     <section className="card seat">
-      <h2>{title}</h2>
+      <div className="seat-head">
+        <span className="step" aria-hidden="true">
+          {step}
+        </span>
+        <h2>{title}</h2>
+      </div>
       <p className="hint">{hint}</p>
       <div className="grid" role="group" aria-label={title}>
         {candidates.map((candidate) => (

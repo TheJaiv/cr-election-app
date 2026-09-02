@@ -1,13 +1,15 @@
 /**
- * GET  — read the tally (403 while voting is open).
- * POST — recompute and write it into the Results tab.
+ * GET  — the live tally, seat and open votes compiled per candidate.
+ * POST — the same, and also written into the Results tab.
+ *
+ * Admin cookie required. There is no public results route; results are never
+ * reachable without it, whether voting is open or closed.
  */
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminGuard";
 import { verifyOrigin } from "@/lib/csrf";
+import { getLiveTally } from "@/server/adminData";
 import { getStore } from "@/server/sheets";
-import { tallyToRows } from "@/server/tally";
-import { getTallyIfClosed } from "@/server/tallyGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,12 +17,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const denied = await requireAdmin();
   if (denied) return denied;
-
-  const gated = await getTallyIfClosed();
-  if (!gated.ok) {
-    return NextResponse.json({ error: gated.error }, { status: gated.status });
-  }
-  return NextResponse.json(gated.tally);
+  return NextResponse.json(await getLiveTally());
 }
 
 export async function POST(request: Request) {
@@ -30,14 +27,7 @@ export async function POST(request: Request) {
   const denied = await requireAdmin();
   if (denied) return denied;
 
-  const gated = await getTallyIfClosed();
-  if (!gated.ok) {
-    return NextResponse.json({ error: gated.error }, { status: gated.status });
-  }
-
-  await getStore().writeResults(
-    tallyToRows(gated.tally),
-    new Date().toISOString(),
-  );
-  return NextResponse.json(gated.tally);
+  const tally = await getLiveTally();
+  await getStore().writeResults(tally.combined, new Date().toISOString());
+  return NextResponse.json(tally);
 }

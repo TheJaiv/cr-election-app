@@ -6,10 +6,10 @@ export const metadata = { title: "Admin · CR Election 2026" };
 
 export default function AdminPage() {
   return (
-    <main className="page">
+    <main className="page wide">
       <header className="masthead">
         <h1>Election admin</h1>
-        <p>Turnout, voting toggle, and the sealed tally.</p>
+        <p>Live turnout, standings, and the voting toggle.</p>
       </header>
       <AdminPanel />
     </main>
