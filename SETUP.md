@@ -94,7 +94,7 @@ spreadsheet formula. A date-only field kills that correlation.
    **Scopes: add none.** The app requests `openid email` at sign-in and nothing
    else, so there is no name and no profile picture to collect.
 
-   **User caps — this decides whether 152 voters can actually sign in:**
+   **User caps — this decides whether 153 voters can actually sign in:**
 
    | Consent screen state | User cap | Verification review |
    | --- | --- | --- |
@@ -103,7 +103,7 @@ spreadsheet formula. A date-only field kills that correlation.
    | Internal | none | n/a |
 
    **If you chose External, you must publish the app.** Go to **Audience →
-   Publish app**. Testing mode caps you at **100 test users** and you have 152
+   Publish app**. Testing mode caps you at **100 test users** and you have 153
    voters, so test users are not an option. Publishing is fine here: `openid`
    and `email` are non-sensitive scopes, so no Google verification review is
    required and voters see a normal consent screen. Your own allowlist is what
@@ -415,7 +415,7 @@ convenience; it is not what enforces the rule.
 
 Edit `src/config/candidates.ts` and put the photos in `public/candidates/`.
 
-The electoral roll — roll number, name and email for all 152 students — lives in
+The electoral roll — roll number, name and email for all 153 students — lives in
 `src/config/roster.ts`. It drives the voter's own roll number on the ballot, the
 turnout figures, and the "not voted" list.
 

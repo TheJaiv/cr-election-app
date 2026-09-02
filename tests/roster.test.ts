@@ -4,7 +4,7 @@ import { ROSTER, splitByTurnout, studentByEmail } from "@/config/roster";
 
 describe("electoral roll", () => {
   it("holds the whole electorate", () => {
-    expect(ROSTER).toHaveLength(152);
+    expect(ROSTER).toHaveLength(153);
     expect(ROSTER).toHaveLength(TOTAL_ELECTORATE);
   });
 
@@ -15,10 +15,10 @@ describe("electoral roll", () => {
     );
   });
 
-  it("has roll numbers running 26075001 to 26075152 with no gaps", () => {
+  it("has roll numbers running 26075001 to 26075153 with no gaps", () => {
     const rolls = ROSTER.map((s) => Number(s.roll)).sort((a, b) => a - b);
     expect(rolls[0]).toBe(26075001);
-    expect(rolls[rolls.length - 1]).toBe(26075152);
+    expect(rolls[rolls.length - 1]).toBe(26075153);
     for (let i = 1; i < rolls.length; i++) {
       expect(rolls[i]).toBe(rolls[i - 1] + 1);
     }
@@ -62,7 +62,7 @@ describe("turnout split", () => {
   it("puts everyone in notVoted when nobody has voted", () => {
     const { voted, notVoted, unknown } = splitByTurnout([]);
     expect(voted).toHaveLength(0);
-    expect(notVoted).toHaveLength(152);
+    expect(notVoted).toHaveLength(153);
     expect(unknown).toHaveLength(0);
   });
 
@@ -73,13 +73,13 @@ describe("turnout split", () => {
     ]);
     expect(voted.map((s) => s.roll).sort()).toEqual(["26075057", "26075131"]);
     expect(notVoted).toHaveLength(150);
-    expect(voted.length + notVoted.length).toBe(152);
+    expect(voted.length + notVoted.length).toBe(153);
   });
 
   it("flags a voter who is not on the roll instead of hiding them", () => {
     const { unknown, notVoted } = splitByTurnout(["stranger@itbhu.ac.in"]);
     expect(unknown).toEqual(["stranger@itbhu.ac.in"]);
-    expect(notVoted).toHaveLength(152);
+    expect(notVoted).toHaveLength(153);
   });
 
   it("ignores blank rows in the Voters tab", () => {

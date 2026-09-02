@@ -26,7 +26,7 @@ since the reserved seats are decided separately.
 ```
 src/
   config/candidates.ts     the nine candidates — edit this to change the ballot
-  config/roster.ts         the 152-student electoral roll (SERVER ONLY, real PII)
+  config/roster.ts         the 153-student electoral roll (SERVER ONLY, real PII)
   lib/
     ballot.ts              the election rules (pure, heavily tested)
     allowlist.ts           who may sign in

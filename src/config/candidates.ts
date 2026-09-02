@@ -79,7 +79,7 @@ export const CANDIDATES: readonly Candidate[] = [
 ] as const;
 
 /** Size of the electorate, used to show "votes remaining" in the admin panel. */
-export const TOTAL_ELECTORATE = 152;
+export const TOTAL_ELECTORATE = 153;
 
 export const MALE_CANDIDATES = CANDIDATES.filter((c) => c.gender === "male");
 export const FEMALE_CANDIDATES = CANDIDATES.filter((c) => c.gender === "female");

@@ -17,7 +17,7 @@ type Globals = {
 
 const g = globalThis as unknown as Globals;
 
-/** One global lock. ~152 voters means contention is irrelevant. */
+/** One global lock. ~153 voters means contention is irrelevant. */
 export const voteMutex: Mutex = (g.__crVoteMutex ??= new Mutex());
 
 const NONCE_TTL_MS = 30 * 60 * 1000;

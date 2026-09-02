@@ -180,6 +180,7 @@ const ROLL: readonly (readonly [string, string, string])[] = [
   ["26075150", "Yallanki Mahitha", "yallanki.mahitha.cse26"],
   ["26075151", "Yashwant Chouhan", "yashwant.chouhan.cse26"],
   ["26075152", "Yeluri Siva Sasank", "yelurisiva.sasank.cse26"],
+  ["26075153", "Anant", "anant.student.cse26"],
 ] as const;
 
 export const ROSTER: readonly Student[] = ROLL.map(([roll, name, local]) => ({
